@@ -38,7 +38,7 @@ pipeline {
             steps {
                 script { telegramBot.begin() }
 
-                git branch: 'master', url: 'https://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@github.com/Andrei-Raev/TTBack.git'
+                git branch: 'master', url: 'https://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@github.com/Andrei-Raev/FGR.git'
 
                 script { telegramBot.end() }
             }
@@ -91,7 +91,6 @@ EOF
                         ssh -i ${SSH_KEY_PATH} ${SERVER_USER}@${SERVER_IP} <<EOF
                             docker image prune -f
                             docker run -d --network host --name run-fgr fgr
-
 EOF
                         """
                     }
