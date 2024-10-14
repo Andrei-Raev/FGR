@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Main Page{% endblock %}
+
+
+
+
+
+{% block content %}
+    <div class="container">
+        <div>
+            <div class="content">
+                <div id="question">                </div>
+                <progress value="50" max="100" style="width:100%;"></progress>
+            </div>
+
+            <div class="info-block">
+                <div>
+                        <p>Отвеченные: <span id="answered-correct">0</span> / <span id="total-questions">0</span></p>
+                        <p>Оставшееся время: <span id="remaining-time">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <aside>
+            <div class="sidebar">
+                <div class="user-info" style="margin-bottom:20px;">
+                    <p><span id="user-name">{{ username | safe }}</span></p>
+                    <button onclick="logout()">Выйти</button>
+                </div>
+                <div class="settings" style="margin-bottom:20px; display: none">
+                    <h3>Настройки</h3>
+                    <label>
+                        <input type="checkbox" id="random-errors" onchange="toggleRandomErrorChance()"> Случайные ошибки
+                    </label>
+                    <div id="error-chance" style="display:none;">
+                        <label for="chance">Шанс случайной ошибки:</label>
+                        <input type="number" id="chance" name="chance" min="0" max="100" step="1">
+                    </div>
+                </div>
+            </div>
+            <div class="log" style="overflow-y:auto;">
+                <h3>Ло<span>г</span></h3>
+                <div id="log-container">
+                </div>
+            </div>
+        </aside>
+    </div>
+    <div style="position: fixed; bottom: 15px; right: 20px; color: var(--secondary-color)">Ответы в базе: <span id="answer-count">0</span></div>
+    <script src="/static/main.js" async></script>
+{% endblock %}

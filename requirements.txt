@@ -4,3 +4,6 @@ PyMySQL
 uvicorn~=0.30
 pydantic~=2.8
 requests~=2.30
+beautifulsoup4
+jinja2
+python-multipart

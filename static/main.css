@@ -1,0 +1,395 @@
+:root {
+    --primary-color: #3e92cc;
+    --primary-color-25: #3e92cc40;
+    --secondary-color: #d8315b;
+    --secondary-color-50: #d8315b80;
+    --background-color: #fffaff;
+    --text-color: #0a2463;
+    --card-background-color: #ffffff;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --accent-color: var(--secondary-color);
+    --border-radius: 12px;
+
+    --yes-color: #6D8D00;
+    --no-color: #AB1803;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: var(--text-color);
+    background-color: var(--background-color);
+}
+
+header, footer {
+    display: none;
+}
+
+main {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.container {
+    display: flex;
+    gap: 3em;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.content {
+    box-shadow: 0 4px 6px var(--shadow-color);
+    border-radius: var(--border-radius);
+    background-color: var(--card-background-color);
+    position: relative;
+    padding: 20px;
+
+    overflow: hidden;
+
+    min-height: 70vh;
+    min-width: 50vw;
+}
+
+
+.question-title {
+    margin: 1rem 0 .25rem;
+    font-size: 2rem;
+}
+
+.question-img {
+    border-radius: var(--border-radius);
+    width: 18rem;
+}
+
+#question {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+
+    padding: 0 10px;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.question-subdiv {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 5rem;
+}
+
+.question-answer-div-wrap {
+    width: 45%;
+
+
+}
+
+.question-answer-div {
+    display: flex;
+    /*width: min-content;*/
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+
+    /*margin-bottom: 5rem;*/
+}
+
+.question-button {
+    /*width: 6rem;*/
+    /*height: 2.5rem;*/
+    font-size: 1.1rem;
+    font-weight: bolder;
+}
+
+.answer-span input:checked + label {
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    cursor: pointer;
+    width: fit-content;
+    box-shadow: 0 0 0 white;
+}
+
+.answer-span label {
+    cursor: pointer;
+    padding: 0.5rem;
+    box-shadow: 0 0 8px var(--secondary-color-50);
+    border-radius: var(--border-radius);
+
+    transition: all 0.3s ease;
+}
+
+
+.answer-span input {
+    /*no display*/
+    display: none;
+}
+
+.question-select-radio {
+    /*margin-top: 2rem;*/
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    gap: .25em;
+}
+
+.content progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /*filter: alpha(opacity=75);*/
+    -moz-opacity: .75;
+
+    border: 0;
+    /*color: var(--primary-color);*/
+
+    appearance: none;
+    /*border-radius: var(--border-radius);*/
+}
+
+progress::-webkit-progress-bar {
+    background-color: var(--primary-color-25);
+}
+
+progress::-webkit-progress-value {
+    background-color: var(--primary-color);
+
+}
+
+
+.sidebar {
+    box-shadow: 0 4px 6px var(--shadow-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    position: relative;
+
+    padding-bottom: 2.2em;
+    max-width: 500px;
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.sidebar button {
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    font-weight: bolder;
+    font-size: 1.1rem;
+}
+
+
+.question-card {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    max-width: 400px;
+    height: 5px;
+    background-color: var(--secondary-color);
+    margin-bottom: 10px;
+}
+
+.info-block {
+    /*width: 100%;*/
+    /*max-width: 400px;*/
+    /*height: fit;*/
+    background-color: var(--secondary-color-50);
+    padding: 0 3rem;
+    margin: 0 auto;
+    margin-top: 20px;
+
+    width: fit-content;
+    color: #fff;
+
+    border-radius: var(--border-radius);
+}
+
+.info-block div {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 1rem;
+}
+
+.info-block div p {
+    white-space: nowrap;
+}
+
+.info-block div p span {
+    font-weight: bolder;
+}
+
+.user-info p {
+    margin: 0;
+}
+
+.log {
+    overflow-y: auto;
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 1em;
+
+    min-height: 50vh;
+
+}
+
+h3 {
+    padding: 0;
+    margin: 0;
+}
+
+.log h3 {
+    margin: 0 auto;
+    width: min-content;
+
+    font-size: 1.8rem;
+    letter-spacing: .3em;
+}
+
+.log h3 span {
+    letter-spacing: 0;
+}
+
+.user-info, .settings, .log {
+    margin-bottom: 20px;
+}
+
+.log-container {
+    box-shadow: #0a2463 0 4px 6px;
+}
+
+aside {
+    max-width: 500px;
+}
+
+button {
+    background-color: var(--secondary-color);
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: var(--accent-color);
+}
+
+.login-button {
+    width: 100%;
+    font-size: 1rem;
+    font-weight: bolder;
+}
+
+.login-title {
+    font-size: 3em;
+    font-weight: lighter;
+    margin: 0 auto;
+    margin-right: -.5em;
+    margin-bottom: .5rem;
+    width: min-content;
+    text-align: center;
+    letter-spacing: .5em;
+}
+
+input[type="text"], input[type="password"], input[type="number"] {
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+label {
+    display: block;
+    /*margin-bottom: 5px;*/
+    margin-left: .5em;
+
+}
+
+@media (max-width: 768px) {
+    main {
+        display: block;
+        overflow-y: auto;
+    }
+
+    .container {
+        display: block;
+    }
+
+    .content {
+        margin: 0 3rem;
+        margin-top: 10rem;
+    }
+
+    .user-info, .settings, .log {
+        flex: 1;
+        margin-bottom: 0;
+    }
+
+    aside {
+        margin: 0 auto;
+        margin-top: 1rem;
+    }
+
+    .sidebar {
+        position: absolute;
+        top: 2rem;
+        left: 10vw;
+        right: 10vw;
+    }
+
+    .log {
+        height: auto;
+        min-height: 0;
+    }
+}
+
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.log-item {
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
