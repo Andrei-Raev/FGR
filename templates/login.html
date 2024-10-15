@@ -19,6 +19,8 @@
     </section>
 
     <script>
-
+        if (window.location.pathname === '/login') {
+            document.querySelector('main').style.display = 'flex';
+        }
     </script>
 {% endblock %}

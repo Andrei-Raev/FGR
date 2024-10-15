@@ -376,4 +376,6 @@ function displayResults(data) {
 }
 
 
+
+
 get_status();
