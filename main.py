@@ -133,6 +133,7 @@ def post_question(request: Request, answer: int = Form(...)):
 
     res = get_question(request)
     res['time_left'] = time_left
+    res['is_last_success'] = data['is_last_success']
     return res
 
 
