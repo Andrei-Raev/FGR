@@ -238,6 +238,7 @@ function answerQuestion() {
         .then(data => {
             if (data.is_last_success) {
                 logMessage('Верный ответ!', yesColor);
+                oneMoreA();
             } else {
                 logMessage('Неверный ответ!', noColor);
             }
@@ -257,7 +258,7 @@ function startTimer(timeString) {
     const [minutes, seconds] = timeString.split(':').map(Number);
     const newTimeInSeconds = minutes * 60 + seconds;
 
-    if (newTimeInSeconds < previousTimeInSeconds) {
+    if (newTimeInSeconds < previousTimeInSeconds && timeString !== '20:00') {
         previousTimeInSeconds = newTimeInSeconds;
         updateTimer(newTimeInSeconds);
     }
@@ -276,6 +277,11 @@ function updateTimer(seconds) {
         const secs = seconds % 60;
         remainingTimeElement.innerHTML = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }, 1000);
+}
+
+function oneMoreA() {
+    let count = document.getElementById('answer-count');
+    count.innerHTML = parseInt(count.innerHTML) + 1;
 }
 
 

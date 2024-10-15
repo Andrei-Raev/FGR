@@ -419,6 +419,24 @@ label {
         height: auto;
         min-height: 0;
     }
+
+    #question {
+        position: static;
+        display: block;
+    }
+
+    .question-subdiv {
+        margin-bottom: 1rem;
+    }
+
+    .question-answer-div-wrap {
+        margin: 0 auto;
+    }
+
+    .info-block div {
+        gap: 0;
+        flex-direction: column;
+    }
 }
 
 
