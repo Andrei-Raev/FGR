@@ -55,7 +55,7 @@ def check_status(sid: str) -> bool:
     soup = bs4.BeautifulSoup(_resp.text, 'html.parser')
     _title = soup.find('title').text
 
-    return 'Тестирование' not in _title or True
+    return 'Тестирование' not in _title
 
 
 def parse_result(html):
@@ -95,16 +95,13 @@ def parse_result(html):
 
 
 def _parse_page(sid: str, is_html: bool = False) -> dict:
-    # if not is_html:
-    #     _headers = {
-    #         'Cookie': f'SID={sid}'
-    #     }
-    #     text = requests.get('https://in.3level.ru/?module=testing', headers=_headers).text
-    # else:
-    #     text = sid
-
-    with open('tmp_htmls/correct.html', 'r', encoding='utf-8') as f:
-        text = f.read()
+    if not is_html:
+        _headers = {
+            'Cookie': f'SID={sid}'
+        }
+        text = requests.get('https://in.3level.ru/?module=testing', headers=_headers).text
+    else:
+        text = sid
 
     # _save_page_to_file(text, 'tmp_htmls/rr/fls')
 
