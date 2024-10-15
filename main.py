@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import RedirectResponse
 from starlette.staticfiles import StaticFiles
 
-from _utils import auth, test_auth, check_status, _parse_page, _start_test, _answer_question
+from _utils import auth, test_auth, check_status, _parse_page, _start_test, _answer_question, _save_page_to_file
 from database import Session, Question
 
 templates = Jinja2Templates(directory="templates")
@@ -28,7 +28,7 @@ async def root(request: Request):
         return RedirectResponse("/login", status_code=302)
 
     data = {"request": request,
-            "username": username.split('-')[0].strip().replace('@', '<br/>')}
+            "username": username.split('@')[0].strip()}
 
     return templates.TemplateResponse('main.html', data)
 
@@ -72,6 +72,9 @@ def get_question(request: Request):
         return RedirectResponse("/login", status_code=302)
 
     data = _parse_page(request.cookies.get('SID'))
+    if data['is_it_result_page']:
+        return data
+
     question_text = '\n'.join(data['text'])
     question_img = '\n'.join(data['img'])
 
@@ -100,6 +103,8 @@ def get_question(request: Request):
     res['question_number'] = data['question_number']
     res['correct_answers'] = data['current_questions']
     res['total_answers'] = data['total_questions']
+    res['is_it_result_page'] = data['is_it_result_page']
+
     return res
 
 
@@ -111,9 +116,11 @@ def post_question(request: Request, answer: int = Form(...)):
         return RedirectResponse("/login", status_code=302)
 
     answer = int(answer)
-    # _save_page_to_file(request.cookies.get('SID'), 'question.html')
 
     data = _parse_page(request.cookies.get('SID'))
+    # print(data)
+    if data['is_it_result_page']:
+        return data
 
     question_img = '\n'.join(data['img'])
     question_text = '\n'.join(data['text'])
@@ -123,6 +130,8 @@ def post_question(request: Request, answer: int = Form(...)):
 
     question_index = data['current_question_number']
     data = _answer_question(request.cookies.get('SID'), question_index, answer)
+    if data['is_it_result_page']:
+        return data
 
     if data['is_last_success']:
         with Session() as session:
@@ -134,6 +143,7 @@ def post_question(request: Request, answer: int = Form(...)):
     res = get_question(request)
     res['time_left'] = time_left
     res['is_last_success'] = data['is_last_success']
+    res['is_it_result_page'] = data['is_it_result_page']
     return res
 
 

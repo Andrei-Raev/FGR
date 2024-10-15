@@ -1,8 +1,11 @@
-const logContainer = document.getElementById('log-container');
+const logContainer = document.querySelector('.scroll-inner');
 const yesColor = 'var(--yes-color)';
 const noColor = 'var(--no-color)';
 
 const questionDiv = document.getElementById('question');
+
+let previousTimeInSeconds = Infinity;
+
 
 function deleteCookie(name) {
     document.cookie = name + '=; Max-Age=0; path=/; domain=' + window.location.hostname;
@@ -38,6 +41,12 @@ function logMessage(message, color = 'var(--text-color)') {
     newElement.style.color = color;
     newElement.innerHTML = message;
     logContainer.appendChild(newElement);
+
+
+    // delay ,5
+    setTimeout(() => {
+        document.getElementById('log-container').scrollTop = logContainer.scrollHeight;
+    }, 500);
 }
 
 function get_status() {
@@ -64,7 +73,7 @@ function get_status() {
             } else {
                 let res = confirm("Начать тестирование?");
                 if (res) {
-                    logMessage("Да начнется тест!", yesColor);
+                    logMessage("Вы начали тестирование");
                     startTest();
                 } else {
                     logMessage("Вы отказались от тестирования.<br/>Перезагрузите страницу", noColor);
@@ -172,7 +181,9 @@ function reloadUI(data) {
         totalQuestions.innerHTML = data.total_answers;
 
         let remainingTime = document.getElementById('remaining-time');
-        remainingTime.innerHTML = data.time_left;
+        // console.log(data.time_left);
+        startTimer(data.time_left);
+        // remainingTime.innerHTML = data.time_left;
 
         let progressBar = document.querySelector('progress');
         progressBar.value = data.question_number / data.total_answers * 100;
@@ -193,6 +204,12 @@ function updateQuestions() {
     fetch(request)
         .then(res => res.json())
         .then(data => {
+            if (data.is_it_result_page) {
+                logMessage('Тест завершен');
+                displayResults(data);
+                return;
+            }
+
             reloadUI(data);
             if (data.auto) {
                 setTimeout(updateQuestions, 1000);
@@ -219,14 +236,138 @@ function answerQuestion() {
     fetch(request)
         .then(res => res.json())
         .then(data => {
-            reloadUI(data);
-
             if (data.is_last_success) {
                 logMessage('Верный ответ!', yesColor);
             } else {
                 logMessage('Неверный ответ!', noColor);
             }
+
+            if (data.is_it_result_page) {
+                logMessage('Тест завершен');
+                displayResults(data);
+                return;
+            }
+
+            reloadUI(data);
         })
 }
+
+
+function startTimer(timeString) {
+    const [minutes, seconds] = timeString.split(':').map(Number);
+    const newTimeInSeconds = minutes * 60 + seconds;
+
+    if (newTimeInSeconds < previousTimeInSeconds) {
+        previousTimeInSeconds = newTimeInSeconds;
+        updateTimer(newTimeInSeconds);
+    }
+}
+
+function updateTimer(seconds) {
+    const remainingTimeElement = document.getElementById('remaining-time');
+    const intervalId = setInterval(() => {
+        if (seconds <= 0) {
+            clearInterval(intervalId);
+            remainingTimeElement.innerHTML = "00:00";
+            return;
+        }
+        seconds--;
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        remainingTimeElement.innerHTML = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }, 1000);
+}
+
+
+// Функция для отображения данных
+function displayResults(data) {
+    // Очистка содержимого перед вставкой
+    questionDiv.innerHTML = '';
+
+    // Создание элементов
+    const container = document.createElement('div');
+    container.style.overflowY = 'auto'; // для скролирования
+    container.style.flexDirection = 'column';
+    container.style.alignItems = 'center';
+    container.style.textAlign = 'center';
+
+    const title = document.createElement('h2');
+    title.innerText = 'Тест завершен!';
+    container.appendChild(title);
+
+    const points = document.createElement('p');
+    points.innerText = `Набрано баллов: ${data.statistics['Всего баллов']}`;
+    container.appendChild(points);
+
+    const correctPercentage = parseFloat(data.statistics['Процент правильных ответов']);
+    const correctPercentText = document.createElement('p');
+    correctPercentText.innerText = `Процент правильных ответов: ${correctPercentage}%`;
+    container.appendChild(correctPercentText);
+
+    const passText = document.createElement('p');
+    passText.style.fontWeight = 'bold';
+    passText.innerText = correctPercentage >= 80 ? 'Проходной балл достигнут' : 'Проходной балл НЕ достигнут';
+    passText.style.color = correctPercentage >= 80 ? yesColor : noColor;
+    if (correctPercentage >= 80) {
+        logMessage('Проходной балл достигнут!', yesColor);
+    } else {
+        logMessage('Проходной балл НЕ достигнут!', noColor);
+    }
+    container.appendChild(passText);
+
+    const ratingTitle = document.createElement('h3');
+    ratingTitle.innerText = 'Рейтинг';
+    container.appendChild(ratingTitle);
+
+    const hr = document.createElement('hr');
+    hr.style.margin = "5px 0 0 0";
+    container.appendChild(hr);
+
+    const ratingDiv = document.createElement('div');
+    ratingDiv.style.overflowY = 'auto'; // для скролирования
+    ratingDiv.style.maxHeight = '18rem';
+    ratingDiv.style.marginBottom = '1rem';
+    ratingDiv.style.scrollbarWidth = 'none';
+    ratingDiv.style.scrollBehavior = 'smooth';
+
+    const ratingTable = document.createElement('table');
+    ratingTable.style.width = '100%';
+    ratingTable.style.borderCollapse = 'collapse';
+    ratingTable.style.margin = '10px 0';
+
+    const tableHeaderRow = document.createElement('tr');
+    const headers = ['Место', 'Информация', 'Процент правильных ответов'];
+    headers.forEach(headerText => {
+        const header = document.createElement('th');
+        header.innerText = headerText;
+        header.style.border = '1px solid #ddd';
+        header.style.padding = '8px';
+        tableHeaderRow.appendChild(header);
+    });
+    ratingTable.appendChild(tableHeaderRow);
+
+    const currName = document.getElementById('user-name').innerText;
+    data.ratings.forEach(entry => {
+        const row = document.createElement('tr');
+        Object.values(entry).forEach(value => {
+            const cell = document.createElement('td');
+            cell.innerText = value;
+            cell.style.border = '1px solid #ddd';
+            cell.style.padding = '8px';
+            if (value === currName) {
+                cell.style.color = yesColor;
+            }
+
+            row.appendChild(cell);
+        });
+        ratingTable.appendChild(row);
+    });
+
+    ratingDiv.appendChild(ratingTable);
+    container.appendChild(ratingDiv);
+
+    questionDiv.appendChild(container);
+}
+
 
 get_status();

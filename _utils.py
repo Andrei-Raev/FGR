@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import Optional
+from uuid import uuid4
 
 import requests
 import bs4
+from fastapi import HTTPException
 
 
 def auth(login: str, password: str) -> str:
@@ -56,6 +58,42 @@ def check_status(sid: str) -> bool:
     return 'Тестирование' not in _title
 
 
+def parse_result(html):
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+
+    # Извлекаем Статистику
+    statistics_table = soup.find('h2', text='Статистика').find_next('table')
+    statistics_rows = statistics_table.find_all('tr')
+    statistics = {}
+
+    for row in statistics_rows:
+        cols = row.find_all('td')
+        if len(cols) == 2:
+            parameter = cols[0].get_text(strip=True)
+            value = cols[1].get_text(strip=True)
+            statistics[parameter] = value
+
+    # Извлекаем Рейтинг
+    rating_table = soup.find('h2', text='Рейтинг').find_next('table')
+    rating_rows = rating_table.find_all('tr')[1:]  # Пропустить заголовок
+    ratings = []
+
+    for row in rating_rows:
+        cols = row.find_all('td')
+        if len(cols) == 3:
+            rank = cols[0].get_text(strip=True)
+            info = cols[1].get_text(strip=True)
+            score = cols[2].get_text(strip=True)
+            rating_entry = {
+                'rank': rank,
+                'info': info,
+                'score': score
+            }
+            ratings.append(rating_entry)
+
+    return {'statistics': statistics, "ratings": ratings, 'is_it_result_page': True}
+
+
 def _parse_page(sid: str, is_html: bool = False) -> dict:
     if not is_html:
         _headers = {
@@ -65,11 +103,18 @@ def _parse_page(sid: str, is_html: bool = False) -> dict:
     else:
         text = sid
 
+    # _save_page_to_file(text, 'tmp_htmls/rr/fls')
+
     soup = bs4.BeautifulSoup(text, 'html.parser')
-    if 'Вопрос' not in soup.find('title').text:
-        return dict()
+    if 'Просмотр результатов' in soup.find('title').text:
+        return parse_result(text)
+    elif 'Вопрос' not in soup.find('title').text:
+        print(soup.find('title').text)
+        # 400 error fast api response
+        raise HTTPException(status_code=400, detail="Bad request")
 
     res = dict()
+    res['is_it_result_page'] = False
 
     is_success = soup.find('div', {'class': 'alert-success'}) is not None
     res['is_last_success'] = is_success
@@ -122,7 +167,6 @@ def _parse_page(sid: str, is_html: bool = False) -> dict:
     ch_info.__next__()
     ch_info.__next__()
     res["time_left"] = datetime.strptime(ch_info.__next__().find('strong').text, '%H:%M:%S')
-
     return res
 
 
@@ -156,11 +200,14 @@ def _answer_question(sid: str, question_index: int, answer: int) -> dict:
     return _parse_page(requests.post(_url, headers=_headers, data=_data).text, is_html=True)
 
 
-def _save_page_to_file(sid: str, filename: str):
-    _headers = {
-        'Cookie': f'SID={sid}'
-    }
+def _save_page_to_file(text: str, filename: str):
+    # _headers = {
+    #     'Cookie': f'SID={sid}'
+    # }
 
-    r = requests.get('https://in.3level.ru/?module=testing', headers=_headers)
+    uuid = str(uuid4())
+    filename = f'{filename}_{uuid}.html'
+
+    # r = requests.get('https://in.3level.ru/?module=testing', headers=_headers)
     with open(filename, 'w', encoding='utf-8') as f:
-        f.write(r.text)
+        f.write(text)
