@@ -154,3 +154,13 @@ def _answer_question(sid: str, question_index: int, answer: int) -> dict:
     }
 
     return _parse_page(requests.post(_url, headers=_headers, data=_data).text, is_html=True)
+
+
+def _save_page_to_file(sid: str, filename: str):
+    _headers = {
+        'Cookie': f'SID={sid}'
+    }
+
+    r = requests.get('https://in.3level.ru/?module=testing', headers=_headers)
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(r.text)

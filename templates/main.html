@@ -1,23 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Main Page{% endblock %}
-
-
-
-
+{% block title %}Тест{% endblock %}
 
 {% block content %}
     <div class="container">
         <div>
             <div class="content">
-                <div id="question">                </div>
+                <div id="question"></div>
                 <progress value="50" max="100" style="width:100%;"></progress>
             </div>
 
             <div class="info-block">
                 <div>
-                        <p>Отвеченные: <span id="answered-correct">0</span> / <span id="total-questions">0</span></p>
-                        <p>Оставшееся время: <span id="remaining-time">0</span></p>
+                    <p>Отвеченные: <span id="answered-correct">0</span> / <span id="total-questions">0</span></p>
+                    <p>Оставшееся время: <span id="remaining-time">0</span></p>
                 </div>
             </div>
         </div>
@@ -46,6 +42,7 @@
             </div>
         </aside>
     </div>
-    <div style="position: fixed; bottom: 15px; right: 20px; color: var(--secondary-color)">Ответы в базе: <span id="answer-count">0</span></div>
+    <div style="position: fixed; bottom: 15px; right: 20px; color: var(--secondary-color)">Ответы в базе: <span
+            id="answer-count">0</span></div>
     <script src="/static/main.js" async></script>
 {% endblock %}

@@ -69,7 +69,10 @@ main {
 
 .question-img {
     border-radius: var(--border-radius);
-    width: 18rem;
+    max-width: 18rem;
+    max-height: 27rem;
+    min-width: 12rem;
+    /*aspect-ratio: auto;*/
 }
 
 #question {
