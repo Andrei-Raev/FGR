@@ -111,6 +111,12 @@ function reloadUI(data) {
     questionSubDiv.classList.add('question-subdiv');
     questionDiv.appendChild(questionSubDiv);
 
+    if (data.is_it_result_page) {
+        logMessage('Тест завершен');
+        displayResults(data);
+        return;
+    }
+
     if (data.auto) {
         logMessage("Ответ на вопрос " + data.question_number + " взят из базы!", yesColor);
         updateQuestions();
@@ -374,8 +380,6 @@ function displayResults(data) {
 
     questionDiv.appendChild(container);
 }
-
-
 
 
 get_status();
