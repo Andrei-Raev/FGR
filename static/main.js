@@ -97,7 +97,7 @@ function startTest() {
             if (data.status) {
                 updateQuestions();
             } else {
-                logMessage("Произошла ошибка...", noColor);
+                logMessage("Произошла ошибка: превышен лимит прохождения теста", noColor);
             }
         })
 
@@ -217,7 +217,7 @@ function updateQuestions() {
             }
 
             reloadUI(data);
-            if (data.auto) {
+            if (data.auto && !data.is_it_result_page) {
                 setTimeout(updateQuestions, 1000);
             }
         })

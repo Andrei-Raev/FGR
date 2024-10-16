@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
-import requests
 import bs4
+import requests
 from fastapi import HTTPException
 
 

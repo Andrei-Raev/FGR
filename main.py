@@ -68,8 +68,6 @@ def get_status(request: Request):
 def get_question(request: Request):
     if not request.cookies.get('SID'):
         return RedirectResponse("/login", status_code=302)
-    elif not test_auth(request.cookies.get('SID')):
-        return RedirectResponse("/login", status_code=302)
 
     data = _parse_page(request.cookies.get('SID'))
     if data['is_it_result_page']:
@@ -91,7 +89,9 @@ def get_question(request: Request):
         if known_answer:
             known_answer = known_answer.correct_answer
             print(known_answer, "ATTENTION")
-            _answer_question(request.cookies.get('SID'), question_index, known_answer)
+            tmp = _answer_question(request.cookies.get('SID'), question_index, known_answer)
+            if tmp['is_it_result_page']:
+                return tmp
 
     res = dict()
     res['auto'] = True if known_answer else False
