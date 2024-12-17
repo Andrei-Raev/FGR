@@ -13,6 +13,7 @@ class Question(Base):
     id = Column(Integer, primary_key=True)
     hash = Column(String(64), unique=True)
     question_index = Column(Integer)
+    test_id = Column(Integer)
     correct_answer = Column(Integer)
 
 # Base.metadata.create_all(engine)

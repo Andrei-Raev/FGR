@@ -166,19 +166,30 @@ def _parse_page(sid: str, is_html: bool = False) -> dict:
     ch_info.__next__()
     ch_info.__next__()
     ch_info.__next__()
-    res["time_left"] = datetime.strptime(ch_info.__next__().find('strong').text, '%H:%M:%S')
+    try:
+        res["time_left"] = datetime.strptime(ch_info.__next__().find('strong').text, '%H:%M:%S')
+    except Exception:
+        res['time_left'] = datetime.strptime("0:20:00", '%H:%M:%S')
     return res
 
 
-def _start_test(sid: str) -> bool:
+class TestList:
+    AAP_STYLE = {'section_id': 1, 'test_id': 19}
+    AAP_2024 = {'section_id': 1, 'test_id': 30}
+    AAP_KURS = {'section_id': 1, 'test_id': 39}
+    OPPR_2024 = {'section_id': 3, 'test_id': 37}
+
+
+
+def _start_test(sid: str, section_id: int, test_id: int) -> bool:
     _headers = {
         'Cookie': f'SID={sid}'
     }
 
     _url = 'http://in.3level.ru/?module=testing'
     _data = {
-        'section_id': 1,
-        'test_id': 19,
+        'section_id': section_id,
+        'test_id': test_id,
         'submit_button': 'Выбрать'
     }
 

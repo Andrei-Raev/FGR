@@ -6,6 +6,11 @@ const questionDiv = document.getElementById('question');
 
 let previousTimeInSeconds = Infinity;
 
+let resultGranted = false;
+
+let copyTask = '';
+
+let test_id_g = 0;
 
 function deleteCookie(name) {
     document.cookie = name + '=; Max-Age=0; path=/; domain=' + window.location.hostname;
@@ -49,11 +54,61 @@ function logMessage(message, color = 'var(--text-color)') {
     }, 500);
 }
 
+function showTestSelector(tests) {
+    return new Promise((resolve) => {
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.borderRadius = 'var(--border-radius)';
+        container.style.top = '50%';
+        container.style.left = '50%';
+        container.style.transform = 'translate(-50%, -50%)';
+        container.style.padding = '20px';
+        container.style.backgroundColor = '#fff';
+        container.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        container.style.zIndex = '1000';
+
+        const title = document.createElement('h2');
+        title.innerText = 'Выберите тест';
+        container.appendChild(title);
+
+        const select = document.createElement('select');
+        select.style.width = '100%';
+        select.style.marginBottom = '10px';
+
+        tests.forEach(test => {
+            const option = document.createElement('option');
+            option.value = test.key_id;
+            option.innerText = test.description;
+            select.appendChild(option);
+        });
+
+        container.appendChild(select);
+
+        const button = document.createElement('button');
+        button.innerText = 'Подтвердить';
+        button.style.display = 'block';
+        button.style.width = '100%';
+
+        button.onclick = function () {
+            const selectedValue = select.value;
+            document.body.removeChild(container);
+            resolve(selectedValue);
+        };
+
+        container.appendChild(button);
+        document.body.appendChild(container);
+    });
+}
+
+
 function get_status() {
     let header = new Headers();
     header.append('Cookie', 'SID=' + getCookie('SID'));
 
-    let request = new Request('/status', {
+    let body = new FormData();
+    body.append('test_id', test_id_g);
+
+    let request = new Request(`/status?test_id=${test_id_g}`, {
         method: 'GET',
         headers: header
     });
@@ -71,24 +126,39 @@ function get_status() {
                 logMessage("Вы продолжаете тестирование");
 
             } else {
-                let res = confirm("Начать тестирование?");
-                if (res) {
-                    logMessage("Вы начали тестирование");
-                    startTest();
-                } else {
-                    logMessage("Вы отказались от тестирования.<br/>Перезагрузите страницу", noColor);
-                }
+                const tests = [
+                    {key_id: 'OPPR_2024', description: 'Итоговый тест "Оптимизация процессов и принятия решений"'},
+                    {key_id: 'AAP_2024', description: 'Итоговый тест "Архитектурное проектирование"'},
+                    {key_id: 'AAP_KURS', description: 'Тест по курсовому проекту "Архитектурное проектирование"'},
+                    {
+                        key_id: 'AAP_STYLE',
+                        description: 'Тест на знание стилей "Автоматизация архитектурного проектирования"'
+                    },
+                ];
+
+                showTestSelector(tests).then(selectedTestId => {
+                    if (selectedTestId) {
+                        logMessage("Вы начали тестирование");
+                        startTest(selectedTestId);
+                    } else {
+                        logMessage("Вы отказались от тестирования.<br/>Перезагрузите страницу", noColor);
+                    }
+                });
+
             }
         })
 }
 
-function startTest() {
+function startTest(test_id) {
+    test_id_g = test_id
     let header = new Headers();
     header.append('Cookie', 'SID=' + getCookie('SID'));
+    header.append('Content-Type', 'application/json; charset=UTF-8');
 
     let request = new Request('/start_test', {
         method: 'POST',
-        headers: header
+        headers: header,
+        body: JSON.stringify({test_id: test_id})
     });
 
     fetch(request)
@@ -96,6 +166,7 @@ function startTest() {
         .then(data => {
             if (data.status) {
                 updateQuestions();
+                resultGranted = false;
             } else {
                 logMessage("Произошла ошибка: превышен лимит прохождения теста", noColor);
             }
@@ -105,6 +176,7 @@ function startTest() {
 }
 
 function reloadUI(data) {
+    if (resultGranted) return;
     questionDiv.innerHTML = '';
 
     let questionSubDiv = document.createElement('div');
@@ -216,6 +288,9 @@ function updateQuestions() {
                 return;
             }
 
+            copyTask = parseAnswer(data);
+
+
             reloadUI(data);
             if (data.auto && !data.is_it_result_page) {
                 setTimeout(updateQuestions, 1000);
@@ -233,6 +308,8 @@ function answerQuestion() {
     let body = new FormData();
     body.append('answer', answer.value);
 
+    body.append('test_id', test_id_g);
+
     let request = new Request('/question', {
         method: 'POST',
         headers: header,
@@ -248,6 +325,8 @@ function answerQuestion() {
             } else {
                 logMessage('Неверный ответ!', noColor);
             }
+
+            copyTask = parseAnswer(data);
 
             if (data.is_it_result_page) {
                 logMessage('Тест завершен');
@@ -293,6 +372,7 @@ function oneMoreA() {
 
 // Функция для отображения данных
 function displayResults(data) {
+    resultGranted = true;
     // Очистка содержимого перед вставкой
     questionDiv.innerHTML = '';
 
@@ -381,5 +461,24 @@ function displayResults(data) {
     questionDiv.appendChild(container);
 }
 
+
+function parseAnswer(data) {
+    let result = `Вопрос #${data.question_number}\n${data.question_text}\n\nВарианты:\n`;
+    data.answers.forEach(answer => {
+        result += `${answer.num + 1}. ${answer.text}\n`;
+    });
+    return result;
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            logMessage('Скопировано')
+        })
+        .catch(error => {
+            logMessage(`Текст не скопирован ${error}`)
+        });
+    console.log(text);
+}
 
 get_status();

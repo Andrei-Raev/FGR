@@ -1,11 +1,11 @@
 import hashlib
 
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Query
 from fastapi.templating import Jinja2Templates
 from starlette.responses import RedirectResponse
 from starlette.staticfiles import StaticFiles
 
-from _utils import auth, test_auth, check_status, _parse_page, _start_test, _answer_question, _save_page_to_file
+from _utils import auth, test_auth, check_status, _parse_page, _start_test, _answer_question, TestList
 from database import Session, Question
 
 templates = Jinja2Templates(directory="templates")
@@ -52,20 +52,20 @@ async def post_login(request: Request):
 
 
 @app.get("/status")
-def get_status(request: Request):
+async def get_status(request: Request, test_id: int = Query(...)):
     if not request.cookies.get('SID'):
         return RedirectResponse("/login", status_code=302)
     elif not test_auth(request.cookies.get('SID')):
         return RedirectResponse("/login", status_code=302)
 
     with Session() as session:
-        in_base = session.query(Question).count()
+        in_base = session.query(Question).where(Question.test_id == test_id).count()
 
     return {"status": check_status(request.cookies.get('SID')), "in_base": in_base}
 
 
 @app.get('/question')
-def get_question(request: Request):
+async def get_question(request: Request):
     if not request.cookies.get('SID'):
         return RedirectResponse("/login", status_code=302)
 
@@ -109,13 +109,14 @@ def get_question(request: Request):
 
 
 @app.post('/question')
-def post_question(request: Request, answer: int = Form(...)):
+async def post_question(request: Request, answer: int = Form(...), test_id: int = Form(...)):
     if not request.cookies.get('SID'):
         return RedirectResponse("/login", status_code=302)
     elif not test_auth(request.cookies.get('SID')):
         return RedirectResponse("/login", status_code=302)
 
     answer = int(answer)
+    test_id = int(test_id)
 
     data = _parse_page(request.cookies.get('SID'))
     # print(data)
@@ -135,12 +136,13 @@ def post_question(request: Request, answer: int = Form(...)):
 
     if data['is_last_success']:
         with Session() as session:
-            session.add(Question(hash=t_hash, question_index=question_index, correct_answer=answer))
+            session.add(
+                Question(hash=t_hash, question_index=question_index, correct_answer=answer, test_id=test_id))
             session.commit()
 
     time_left = data['time_left'].strftime('%M:%S')
 
-    res = get_question(request)
+    res = await get_question(request)
     res['time_left'] = time_left
     res['is_last_success'] = data['is_last_success']
     res['is_it_result_page'] = data['is_it_result_page']
@@ -148,12 +150,24 @@ def post_question(request: Request, answer: int = Form(...)):
 
 
 @app.post("/start_test")
-def start_test(request: Request):
+async def start_test(request: Request):
     if not request.cookies.get('SID'):
         return RedirectResponse("/login", status_code=302)
     elif not test_auth(request.cookies.get('SID')):
         return RedirectResponse("/login", status_code=302)
 
-    _start_test(request.cookies.get('SID'))
+    match (await request.json()).get('test_id'):
+        case 'AAP_2024':
+            test_id = TestList.AAP_2024
+        case 'AAP_KURS':
+            test_id = TestList.AAP_KURS
+        case 'AAP_STYLE':
+            test_id = TestList.AAP_STYLE
+        case 'OPPR_2024':
+            test_id = TestList.OPPR_2024
+        case _:
+            return RedirectResponse("/login", status_code=302)
+
+    _start_test(request.cookies.get('SID'), **test_id)
 
     return {"status": check_status(request.cookies.get('SID'))}

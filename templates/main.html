@@ -7,13 +7,14 @@
         <div>
             <div class="content">
                 <div id="question"></div>
-                <progress value="50" max="100" style="width:100%;"></progress>
+                <progress value="0" max="100" style="width:100%;"></progress>
             </div>
 
             <div class="info-block">
                 <div>
                     <p>Отвеченные: <span id="answered-correct">0</span> / <span id="total-questions">0</span></p>
                     <p>Оставшееся время: <span id="remaining-time">0</span></p>
+                    <button onclick="copyText(copyTask)" class="sm_bt">Скопировать<br>вопрос</button>
                 </div>
             </div>
         </div>

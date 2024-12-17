@@ -455,3 +455,43 @@ label {
     opacity: 0;
     animation: fadeInUp 0.5s ease-out forwards;
 }
+
+
+select {
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    font-size: 16px;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    transition: border-color 0.3s, background-color 0.3s;
+    /*appearance: none;*/
+}
+
+select:hover {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    outline: none;
+    background-color: #fff;
+}
+
+option {
+    padding: 10px;
+    font-size: 16px;
+    background-color: #fff;
+    color: #333;
+}
+
+option:hover {
+    background-color: #f1f1f1;
+}
+
+
+.sm_bt {
+    padding: .15rem .45rem;
+    height: 2.5em;
+    margin: .65em auto;
+}
