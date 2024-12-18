@@ -10,7 +10,7 @@ let resultGranted = false;
 
 let copyTask = '';
 
-let test_id_g = 0;
+// let test_id_g = 0;
 
 function deleteCookie(name) {
     document.cookie = name + '=; Max-Age=0; path=/; domain=' + window.location.hostname;
@@ -22,9 +22,9 @@ function logout() {
 }
 
 function getCookie(name) {
-    var dc = document.cookie;
-    var prefix = name + "=";
-    var begin = dc.indexOf("; " + prefix);
+    let dc = document.cookie;
+    let prefix = name + "=";
+    let begin = dc.indexOf("; " + prefix);
     if (begin === -1) {
         begin = dc.indexOf(prefix);
         if (begin !== 0) return null;
@@ -105,10 +105,7 @@ function get_status() {
     let header = new Headers();
     header.append('Cookie', 'SID=' + getCookie('SID'));
 
-    let body = new FormData();
-    body.append('test_id', test_id_g);
-
-    let request = new Request(`/status?test_id=${test_id_g}`, {
+    let request = new Request(`/status`, {
         method: 'GET',
         headers: header
     });
@@ -150,7 +147,7 @@ function get_status() {
 }
 
 function startTest(test_id) {
-    test_id_g = test_id
+    // test_id_g = test_id;
     let header = new Headers();
     header.append('Cookie', 'SID=' + getCookie('SID'));
     header.append('Content-Type', 'application/json; charset=UTF-8');
@@ -190,7 +187,7 @@ function reloadUI(data) {
     }
 
     if (data.auto) {
-        logMessage("Ответ на вопрос " + data.question_number + " взят из базы!", yesColor);
+        logMessage("Ответ на вопрос " + data.question_number + " взят из базы", yesColor);
         updateQuestions();
     } else {
         let title = document.createElement('h3');
@@ -258,7 +255,7 @@ function reloadUI(data) {
         let totalQuestions = document.getElementById('total-questions');
         totalQuestions.innerHTML = data.total_answers;
 
-        let remainingTime = document.getElementById('remaining-time');
+        // let remainingTime = document.getElementById('remaining-time');
         // console.log(data.time_left);
         startTimer(data.time_left);
         // remainingTime.innerHTML = data.time_left;
@@ -274,7 +271,7 @@ function updateQuestions() {
     let header = new Headers();
     header.append('Cookie', 'SID=' + getCookie('SID'));
 
-    let request = new Request('/question', {
+    let request = new Request(`/question`, {
         method: 'GET',
         headers: header
     });
@@ -288,13 +285,12 @@ function updateQuestions() {
                 return;
             }
 
-            copyTask = parseAnswer(data);
-
-
             reloadUI(data);
             if (data.auto && !data.is_it_result_page) {
                 setTimeout(updateQuestions, 1000);
             }
+
+            copyTask = parseAnswer(data);
         })
 }
 
@@ -308,7 +304,7 @@ function answerQuestion() {
     let body = new FormData();
     body.append('answer', answer.value);
 
-    body.append('test_id', test_id_g);
+    // body.append('test_id', test_id_g);
 
     let request = new Request('/question', {
         method: 'POST',
@@ -320,19 +316,20 @@ function answerQuestion() {
         .then(res => res.json())
         .then(data => {
             if (data.is_last_success) {
-                logMessage('Верный ответ!', yesColor);
+                logMessage('Верный ответ', yesColor);
                 oneMoreA();
             } else {
-                logMessage('Неверный ответ!', noColor);
+                logMessage('Неверный ответ', noColor);
             }
 
-            copyTask = parseAnswer(data);
 
             if (data.is_it_result_page) {
                 logMessage('Тест завершен');
                 displayResults(data);
                 return;
             }
+
+            copyTask = parseAnswer(data);
 
             reloadUI(data);
         })
@@ -384,7 +381,7 @@ function displayResults(data) {
     container.style.textAlign = 'center';
 
     const title = document.createElement('h2');
-    title.innerText = 'Тест завершен!';
+    title.innerText = 'Тест завершен';
     container.appendChild(title);
 
     const points = document.createElement('p');
@@ -401,9 +398,9 @@ function displayResults(data) {
     passText.innerText = correctPercentage >= 80 ? 'Проходной балл достигнут' : 'Проходной балл НЕ достигнут';
     passText.style.color = correctPercentage >= 80 ? yesColor : noColor;
     if (correctPercentage >= 80) {
-        logMessage('Проходной балл достигнут!', yesColor);
+        logMessage('Проходной балл достигнут', yesColor);
     } else {
-        logMessage('Проходной балл НЕ достигнут!', noColor);
+        logMessage('Проходной балл НЕ достигнут', noColor);
     }
     container.appendChild(passText);
 

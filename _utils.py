@@ -6,6 +6,8 @@ import bs4
 import requests
 from fastapi import HTTPException
 
+from database import QuestionText
+
 
 def auth(login: str, password: str) -> str:
     """
@@ -180,7 +182,6 @@ class TestList:
     OPPR_2024 = {'section_id': 3, 'test_id': 37}
 
 
-
 def _start_test(sid: str, section_id: int, test_id: int) -> bool:
     _headers = {
         'Cookie': f'SID={sid}'
@@ -222,3 +223,13 @@ def _save_page_to_file(text: str, filename: str):
     # r = requests.get('https://in.3level.ru/?module=testing', headers=_headers)
     with open(filename, 'w', encoding='utf-8') as f:
         f.write(text)
+
+
+def save_question_to_db(question_id: int, text: str, answers: list[dict[str, str]], test_id: int, session) -> None:
+    q = session.query(QuestionText).filter(QuestionText.question_index == question_id).first()
+    if q:
+        return
+
+    q = QuestionText(question_index=question_id, text=text, answers=answers, test_id=test_id)
+    session.add(q)
+    session.commit()

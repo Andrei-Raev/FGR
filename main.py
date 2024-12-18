@@ -1,11 +1,10 @@
-import hashlib
-
-from fastapi import FastAPI, Request, Form, Query
+from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
-from _utils import auth, test_auth, check_status, _parse_page, _start_test, _answer_question, TestList
+from _utils import auth, test_auth, check_status, _parse_page, _start_test, _answer_question, TestList, \
+    save_question_to_db
 from database import Session, Question
 
 templates = Jinja2Templates(directory="templates")
@@ -46,17 +45,20 @@ async def post_login(request: Request):
 
     auth_cookie = auth(login, password)
 
-    headers = {'Set-Cookie': f"SID={auth_cookie}"}
+    # 40 mins expires
+    headers = {'Set-Cookie': f"SID={auth_cookie}; max-age={60 * 60 * 40}; path=/"}
 
     return RedirectResponse("/", status_code=302, headers=headers)
 
 
 @app.get("/status")
-async def get_status(request: Request, test_id: int = Query(...)):
+async def get_status(request: Request):
     if not request.cookies.get('SID'):
         return RedirectResponse("/login", status_code=302)
     elif not test_auth(request.cookies.get('SID')):
         return RedirectResponse("/login", status_code=302)
+
+    test_id = int(request.cookies.get('test_id') or 0)
 
     with Session() as session:
         in_base = session.query(Question).where(Question.test_id == test_id).count()
@@ -76,19 +78,17 @@ async def get_question(request: Request):
     question_text = '\n'.join(data['text'])
     question_img = '\n'.join(data['img'])
 
-    hash_object = hashlib.sha256()
-    hash_object.update((question_text + question_img).encode('utf-8'))
-    t_hash = hash_object.hexdigest()
+    # hash_object = hashlib.sha256()
+    # hash_object.update((question_text + question_img).encode('utf-8'))
+    # t_hash = hash_object.hexdigest()
 
     question_index = data['current_question_number']
 
     with Session() as session:
-        known_answer = session.query(Question).filter(
-            Question.hash == t_hash or Question.question_index == question_index).first()
+        known_answer = session.query(Question).filter(Question.question_index == question_index).first()
 
         if known_answer:
             known_answer = known_answer.correct_answer
-            print(known_answer, "ATTENTION")
             tmp = _answer_question(request.cookies.get('SID'), question_index, known_answer)
             if tmp['is_it_result_page']:
                 return tmp
@@ -105,18 +105,26 @@ async def get_question(request: Request):
     res['total_answers'] = data['total_questions']
     res['is_it_result_page'] = data['is_it_result_page']
 
+    test_id = int(request.cookies.get('test_id') or 0)
+
+    with Session() as session:
+        save_question_to_db(question_id=question_index, test_id=test_id, answers=data['answers'],
+                            session=session,
+                            text=question_text + ((';' + question_img) if question_img else ''))
+
     return res
 
 
 @app.post('/question')
-async def post_question(request: Request, answer: int = Form(...), test_id: int = Form(...)):
+async def post_question(request: Request, answer: int = Form(...)):
     if not request.cookies.get('SID'):
         return RedirectResponse("/login", status_code=302)
     elif not test_auth(request.cookies.get('SID')):
         return RedirectResponse("/login", status_code=302)
 
     answer = int(answer)
-    test_id = int(test_id)
+    # get from cookie
+    test_id = int(request.cookies.get('test_id') or 0)
 
     data = _parse_page(request.cookies.get('SID'))
     # print(data)
@@ -125,9 +133,9 @@ async def post_question(request: Request, answer: int = Form(...), test_id: int 
 
     question_img = '\n'.join(data['img'])
     question_text = '\n'.join(data['text'])
-    hash_object = hashlib.sha256()
-    hash_object.update((question_text + question_img).encode('utf-8'))
-    t_hash = hash_object.hexdigest()
+    # hash_object = hashlib.sha256()
+    # hash_object.update((question_text + question_img).encode('utf-8'))
+    # t_hash = hash_object.hexdigest()
 
     question_index = data['current_question_number']
     data = _answer_question(request.cookies.get('SID'), question_index, answer)
@@ -137,7 +145,7 @@ async def post_question(request: Request, answer: int = Form(...), test_id: int 
     if data['is_last_success']:
         with Session() as session:
             session.add(
-                Question(hash=t_hash, question_index=question_index, correct_answer=answer, test_id=test_id))
+                Question(question_index=question_index, correct_answer=answer, test_id=test_id))
             session.commit()
 
     time_left = data['time_left'].strftime('%M:%S')
@@ -156,7 +164,18 @@ async def start_test(request: Request):
     elif not test_auth(request.cookies.get('SID')):
         return RedirectResponse("/login", status_code=302)
 
-    match (await request.json()).get('test_id'):
+    test_id = await get_test_id((await request.json()).get('test_id'))
+
+    _start_test(request.cookies.get('SID'), **test_id)
+
+    headers = {'Set-Cookie': f"test_id={test_id.get('test_id')}"}
+    response = JSONResponse(content={"status": check_status(request.cookies.get('SID'))}, headers=headers)
+
+    return response
+
+
+async def get_test_id(test_type: str) -> dict[str, int]:
+    match test_type:
         case 'AAP_2024':
             test_id = TestList.AAP_2024
         case 'AAP_KURS':
@@ -166,8 +185,5 @@ async def start_test(request: Request):
         case 'OPPR_2024':
             test_id = TestList.OPPR_2024
         case _:
-            return RedirectResponse("/login", status_code=302)
-
-    _start_test(request.cookies.get('SID'), **test_id)
-
-    return {"status": check_status(request.cookies.get('SID'))}
+            test_id = {'test_id': 0, 'section_id': 0}
+    return test_id
