@@ -164,7 +164,10 @@ def _parse_page(sid: str, is_html: bool = False) -> dict:
     ch_info.__next__()
     res["total_questions"] = int(ch_info.__next__().find('strong').text)
     ch_info.__next__()
-    res["current_questions"] = int(ch_info.__next__().find('strong').text)
+    try:
+        res["current_questions"] = int(ttttt:=ch_info.__next__().find('strong').text)
+    except Exception:
+        res["current_questions"] = ttttt
     ch_info.__next__()
     ch_info.__next__()
     ch_info.__next__()
