@@ -1,2 +1,4 @@
 /.idea/
 /.venv/
+/tmp_htmls/
+/.pytest_cache/

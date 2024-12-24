@@ -4,7 +4,7 @@ from starlette.responses import RedirectResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
 from _utils import auth, test_auth, check_status, _parse_page, _start_test, _answer_question, TestList, \
-    save_question_to_db
+    save_question_to_db, decode_answer
 from database import Session, Question
 
 templates = Jinja2Templates(directory="templates")
@@ -104,6 +104,7 @@ async def get_question(request: Request):
     res['correct_answers'] = data['current_questions']
     res['total_answers'] = data['total_questions']
     res['is_it_result_page'] = data['is_it_result_page']
+    res['mult_answer'] = data['mult_answer']
 
     test_id = int(request.cookies.get('test_id') or 0)
 
@@ -115,6 +116,7 @@ async def get_question(request: Request):
     return res
 
 
+
 @app.post('/question')
 async def post_question(request: Request, answer: int = Form(...)):
     if not request.cookies.get('SID'):
@@ -123,6 +125,7 @@ async def post_question(request: Request, answer: int = Form(...)):
         return RedirectResponse("/login", status_code=302)
 
     answer = int(answer)
+    # answer = decode_answer(answer)
     # get from cookie
     test_id = int(request.cookies.get('test_id') or 0)
 
@@ -131,8 +134,8 @@ async def post_question(request: Request, answer: int = Form(...)):
     if data['is_it_result_page']:
         return data
 
-    question_img = '\n'.join(data['img'])
-    question_text = '\n'.join(data['text'])
+    # question_img = '\n'.join(data['img'])
+    # question_text = '\n'.join(data['text'])
     # hash_object = hashlib.sha256()
     # hash_object.update((question_text + question_img).encode('utf-8'))
     # t_hash = hash_object.hexdigest()

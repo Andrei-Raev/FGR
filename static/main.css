@@ -131,6 +131,16 @@ main {
     box-shadow: 0 0 0 white;
 }
 
+.question-tip {
+    font-weight: bold;
+    padding: 0;
+}
+
+.answer-span input:checked + label.mult-answer {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
 .answer-span label {
     cursor: pointer;
     padding: 0.5rem;

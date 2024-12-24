@@ -151,13 +151,19 @@ def _parse_page(sid: str, is_html: bool = False) -> dict:
 
     answers = soup.find('table', {'class': 'table table-hover'})
     tt_res = []
+    mult_answer = False
     for i in answers.children:
         if i != '\n':
-            nm = i.find('td', {'width': '70'}).find('input').get('value')
+            ttt = i.find('td', {'width': '70'}).find('input')
+            if ttt.get('type') == 'checkbox':
+                mult_answer = True
+            nm = ttt.get('value')
             tt = i.text.strip().split('\n')[1]
             tmp = {"text": tt, "num": int(nm)}
             tt_res.append(tmp)
     res['answers'] = sorted(tt_res, key=lambda x: x['num'])
+    res['mult_answer'] = mult_answer
+
 
     info = soup.find('div', {'class': 'alert alert-info'})
     ch_info = info.children
@@ -206,13 +212,65 @@ def _answer_question(sid: str, question_index: int, answer: int) -> dict:
     }
 
     _url = 'http://in.3level.ru/?module=testing'
-    _data = {
-        'current_question': question_index,
-        'answer': answer,
-        'submit_button': 'Ответить'
-    }
+
+    answer = decode_answer(answer)
+    if isinstance(answer, int):
+        _data = {
+            'current_question': question_index,
+            'answer': answer,
+            'submit_button': 'Ответить'
+        }
+    else:
+        _data = {
+            'current_question': question_index,
+            'submit_button': 'Ответить'
+        }
+        for i in answer:
+            _data[f'answer[{i}]'] = f'{i}'
 
     return _parse_page(requests.post(_url, headers=_headers, data=_data).text, is_html=True)
+
+
+def encode_answer(answers):
+    """
+    Функция кодирует ответ в одно целое число.
+    :param answers: Если это единственный индекс, возвращает его. Если список, возвращает отрицательное число.
+    :return: Целое число, представляющее закодированный ответ.
+    """
+    if isinstance(answers, int):
+        return answers
+
+    if isinstance(answers, (list, tuple)):
+        encoded = 0
+        for answer in answers:
+            encoded |= 1 << answer
+        return -encoded  # Используем отрицательное значение для маркировки нескольких ответов
+
+    raise ValueError("Аргумент должен быть целым числом или списком/кортежем.")
+
+
+def decode_answer(encoded):
+    """
+    Функция декодирует закодированный ответ.
+    :param encoded: Целое число, представляющее закодированный ответ.
+    :return: Индекс (для одиночного ответа) или список индексов (для множественного ответа).
+    """
+    if encoded >= 0:
+        # Это одиночный ответ
+        return encoded
+
+    # Это множественный ответ, закодированный отрицательным числом
+    encoded = -encoded  # Возвращаемся к положительному для декодирования
+
+    answers = []
+    index = 0
+    while encoded > 0:
+        if encoded & 1:  # Проверяем, установлен ли текущий бит
+            answers.append(index)
+        encoded >>= 1  # Сдвигаем значение вправо на один бит
+        index += 1
+
+    return answers
 
 
 def _save_page_to_file(text: str, filename: str):

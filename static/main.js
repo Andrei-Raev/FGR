@@ -10,6 +10,8 @@ let resultGranted = false;
 
 let copyTask = '';
 
+let mult_answer = false;
+
 // let test_id_g = 0;
 
 function deleteCookie(name) {
@@ -176,6 +178,8 @@ function reloadUI(data) {
     if (resultGranted) return;
     questionDiv.innerHTML = '';
 
+    mult_answer = data.mult_answer;
+
     let questionSubDiv = document.createElement('div');
     questionSubDiv.classList.add('question-subdiv');
     questionDiv.appendChild(questionSubDiv);
@@ -194,6 +198,13 @@ function reloadUI(data) {
         title.innerHTML = 'Вопрос ' + data.question_number;
         title.classList.add('question-title');
         questionSubDiv.appendChild(title);
+
+        if (mult_answer) {
+            let tip = document.createElement('p');
+            tip.innerHTML = 'Выберите несколько вариантов ответа';
+            tip.classList.add('question-tip');
+            questionSubDiv.appendChild(tip);
+        }
 
         if (data.question_text) {
             let question = document.createElement('p');
@@ -218,17 +229,22 @@ function reloadUI(data) {
         let selectRadio = document.createElement('div');
         selectRadio.classList.add('question-select-radio');
 
+
         for (let answer of data.answers) {
             let answerRadio = document.createElement('input');
             let answerLabel = document.createElement('label');
 
-            answerRadio.type = 'radio';
+            answerRadio.type = mult_answer ? 'checkbox' : 'radio';
+
             answerRadio.name = 'answer';
             answerRadio.value = answer.num;
             answerRadio.id = `answer-${answer.num}`; // Добавляем уникальный id
 
             answerLabel.htmlFor = answerRadio.id;
             answerLabel.innerHTML = answer.text;
+            if (mult_answer) {
+                answerLabel.classList.add('mult-answer');
+            }
 
             let sp = document.createElement('span');
             sp.classList.add('answer-span');
@@ -287,24 +303,54 @@ function updateQuestions() {
 
             reloadUI(data);
             if (data.auto && !data.is_it_result_page) {
-                setTimeout(updateQuestions, 1000);
+                setTimeout(updateQuestions, 3000);
             }
 
             copyTask = parseAnswer(data);
         })
 }
 
+function encodeAnswer(answers) {
+    /**
+     * Кодирует ответ в одно целое число.
+     * @param {number|Array<number>} answers - Если это единственный индекс, возвращает его.
+     * Если массив, возвращает отрицательное число.
+     * @return {number} Целое число, представляющее закодированный ответ.
+     */
+    if (typeof answers === 'number') {
+        return answers;
+    }
+
+    if (Array.isArray(answers)) {
+        let encoded = 0;
+        for (const answer of answers) {
+            encoded |= 1 << answer; // Устанавливаем бит с позиции 'answer' в 1
+        }
+        return -encoded; // Используем отрицательное значение для маркировки нескольких ответов
+    }
+
+    throw new Error("Аргумент должен быть числом или массивом чисел.");
+}
+
+
 function answerQuestion() {
     let answer = document.querySelector('input[name="answer"]:checked');
     if (!answer) return;
+
+    let answers = document.querySelectorAll('input[name="answer"]:checked');
+    let mult_answer = answers.length > 1; // Определяем, если несколько вариантов выбрано
 
     let header = new Headers();
     header.append('Cookie', 'SID=' + getCookie('SID'));
 
     let body = new FormData();
-    body.append('answer', answer.value);
 
-    // body.append('test_id', test_id_g);
+    if (mult_answer) {
+        let selectedAnswers = Array.from(answers).map(input => parseInt(input.value, 10));
+        body.append('answer', encodeAnswer(selectedAnswers));
+    } else {
+        body.append('answer', answer.value);
+    }
 
     let request = new Request('/question', {
         method: 'POST',
@@ -460,7 +506,8 @@ function displayResults(data) {
 
 
 function parseAnswer(data) {
-    let result = `Вопрос #${data.question_number}\n${data.question_text}\n\nВарианты:\n`;
+    let tip = mult_answer ? ' (Несколько вариантов ответа)' : '';
+    let result = `Вопрос #${data.question_number}${tip}\n${data.question_text}\n\nВарианты:\n`;
     data.answers.forEach(answer => {
         result += `${answer.num + 1}. ${answer.text}\n`;
     });
